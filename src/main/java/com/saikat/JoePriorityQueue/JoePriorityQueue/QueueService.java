@@ -31,6 +31,12 @@ public class QueueService {
             Integer clientId = Integer.parseInt(order.get("clientId").asText());
             Integer Quantity = Integer.parseInt(order.get("Quantity").asText());
 
+            if(clientId < Constants.CLIENT_ID_MIN || clientId > Constants.CLIENT_ID_MAX){
+                newResponse.setMessage("Invalid range of client ID, client ID needs be in range of 1-20000");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(newResponse);
+            }
+
             Integer neworderID = orderRepository.insertOrder(clientId, Quantity);
 
             if (neworderID == 0) {
