@@ -2,6 +2,9 @@ package com.saikat.JoePriorityQueue.JoePriorityQueue;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.saikat.JoePriorityQueue.JoePriorityQueue.Exception.EmptyQueueException;
+import com.saikat.JoePriorityQueue.JoePriorityQueue.Response.AllOrderResponse;
+import com.saikat.JoePriorityQueue.JoePriorityQueue.Response.QueuePositionResponse;
+import com.saikat.JoePriorityQueue.JoePriorityQueue.Response.RestResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -56,13 +59,16 @@ public class QueueService {
     public ResponseEntity getQueue(){
 
         SortedMap<Order,Order> queue = orderRepository.getPriorityQueue();
-        if(queue.size() == 0){
-            return ResponseEntity.status(HttpStatus.OK)
-                    .body("The Priority Queue is empty");
-        }
 
-        return ResponseEntity.status(HttpStatus.ACCEPTED)
-                .body(queue);
+        AllOrderResponse response = new AllOrderResponse();
+        if(queue.size() == 0){
+            throw new EmptyQueueException("The queue is currently empty");
+        }
+        response.setTotalWaitTime(queue.size()+" SECONDS");
+        response.setOrders(queue);
+
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(response);
     }
 
     @GetMapping(value = "/check-queue-position", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -70,9 +76,10 @@ public class QueueService {
 
         Integer ClientID = Integer.parseInt(request.get("clientId").asText());
         Integer waitTime = orderRepository.checkWaitTime(ClientID);
-        RestResponse restResponse = new RestResponse("/check-queue-position");
+        QueuePositionResponse restResponse = new QueuePositionResponse(request.get("clientId").asText());
         if (waitTime != 0) {
-            restResponse.setMessage(waitTime + "");
+            restResponse.setQueuePosition(waitTime + "");
+            restResponse.setWaitTime(waitTime+" SECONDS");
             return ResponseEntity.status(HttpStatus.OK)
                     .body(restResponse);
         } else {
@@ -102,8 +109,12 @@ public class QueueService {
             throw new EmptyQueueException("No orders avaliable in queue where the total mounts to "+Constants.MAXIMUM_DELIEVERY_QUEUE_ITEMS);
        }
        else {
+           AllOrderResponse response = new AllOrderResponse();
+           Map<Order,Order> delieveryQueue = orderRepository.nextDelievery();
+           response.setTotalWaitTime(delieveryQueue.size()+" SECONDS");
+           response.setOrders(delieveryQueue);
            return ResponseEntity.status(HttpStatus.OK)
-                   .body(orderRepository.nextDelievery());
+                   .body(response);
        }
     }
 

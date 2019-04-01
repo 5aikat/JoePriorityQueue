@@ -100,7 +100,7 @@ public class OrderRepository {
     public synchronized void updateTheMaps(){
         System.out.println("Thread :"+Thread.currentThread().getName());
         Set<Integer> Keys = orderPriorityQueue.keySet();
-
+        sortedPriorityQueue.clear();
         for(Integer k : Keys){
             Order order = orderPriorityQueue.get(k);
             sortedPriorityQueue.put(order,order);
@@ -112,7 +112,7 @@ public class OrderRepository {
 
         ScheduledExecutorService scheduledExecutorService = new ScheduledThreadPoolExecutor(1);
 
-        scheduledExecutorService.scheduleAtFixedRate(new PriorityQueueThread(this),0,Constants.SCHEDULE_PERIOD_OF_JOE_THREAD_IN_MINUTES,TimeUnit.SECONDS);
+        scheduledExecutorService.scheduleAtFixedRate(new PriorityQueueThread(this),0,Constants.SCHEDULE_PERIOD_OF_JOE_THREAD_IN_MINUTES,TimeUnit.MINUTES);
     }
 
 }

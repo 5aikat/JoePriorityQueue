@@ -1,4 +1,4 @@
-package com.saikat.JoePriorityQueue.JoePriorityQueue;
+package com.saikat.JoePriorityQueue.JoePriorityQueue.Response;
 
 /**
  * @author Saikat
