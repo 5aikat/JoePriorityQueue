@@ -110,13 +110,14 @@ public class QueueService {
 
     @GetMapping(value = "/delievery", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity nextDelievery(){
+        Map<Order,Order> delieveryQueue = orderRepository.nextDelievery();
 
-       if(orderRepository.nextDelievery().size() == 0){
+       if(delieveryQueue.size() == 0){
             throw new EmptyQueueException("No orders avaliable in queue where the total mounts to "+Constants.MAXIMUM_DELIEVERY_QUEUE_ITEMS);
        }
        else {
            AllOrderResponse response = new AllOrderResponse();
-           Map<Order,Order> delieveryQueue = orderRepository.nextDelievery();
+
            response.setTotalWaitTime(delieveryQueue.size()+" SECONDS");
            response.setOrders(delieveryQueue);
            return ResponseEntity.status(HttpStatus.OK)

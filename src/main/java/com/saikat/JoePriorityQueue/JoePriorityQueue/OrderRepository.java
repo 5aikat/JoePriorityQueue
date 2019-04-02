@@ -5,9 +5,7 @@ import org.springframework.scheduling.config.FixedRateTask;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 /**
  * @author Saikat
@@ -22,8 +20,8 @@ public class OrderRepository {
     int baseOrderID=1000;
 
     public OrderRepository(){
-        this.orderPriorityQueue = new HashMap<>();
-        this.sortedPriorityQueue = new TreeMap<>();
+        this.orderPriorityQueue = new ConcurrentHashMap<>();
+        this.sortedPriorityQueue = new ConcurrentSkipListMap<>();
         startJoeScheduledThread();
     }
 
@@ -80,24 +78,26 @@ public class OrderRepository {
     public Map<Order, Order> nextDelievery(){
         updateTheMaps();
 
-        Iterator itr = sortedPriorityQueue.values().iterator();
+        Set<Order> keys = sortedPriorityQueue.keySet();
+
+        Iterator iterator = keys.iterator();
 
         Map<Order,Order> nextDelieveryQueue = new TreeMap<>();
 
         Integer totalItems =0;
 
-        while(itr.hasNext()){
-            Order obj = (Order) itr.next();
+        while(iterator.hasNext()){
+            Order obj = (Order)iterator.next();
             if(totalItems+ obj.getQuantity()<=Constants.MAXIMUM_DELIEVERY_QUEUE_ITEMS ){
                 totalItems+=obj.getQuantity();
                 nextDelieveryQueue.put(obj,obj);
             }
         }
-
+        popElementsFromMap(nextDelieveryQueue);
         return nextDelieveryQueue;
     }
 
-    public synchronized void updateTheMaps(){
+    public void updateTheMaps(){
         System.out.println("Thread :"+Thread.currentThread().getName());
         Set<Integer> Keys = orderPriorityQueue.keySet();
         sortedPriorityQueue.clear();
@@ -105,6 +105,17 @@ public class OrderRepository {
             Order order = orderPriorityQueue.get(k);
             sortedPriorityQueue.put(order,order);
         }
+    }
+
+    public void popElementsFromMap(Map<Order,Order> delieveryMap){
+
+        Set<Order> keys = delieveryMap.keySet();
+        for(Order order: keys){
+            if(orderPriorityQueue.containsKey(order.getClientIdint())){
+                orderPriorityQueue.remove(order.getClientIdint());
+            }
+        }
+        updateTheMaps();
     }
 
     private void startJoeScheduledThread(){
